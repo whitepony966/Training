@@ -124,6 +124,10 @@ body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:16px;bac
     <div id="dl"></div>
   </div>
   <div class="block">
+    <div class="block-header" style="background:#888">Back-up – optional</div>
+    <div id="dlb"></div>
+  </div>
+  <div class="block">
     <div class="block-header" style="background:#6B3FA0">Spinning – optional</div>
     <div class="spin-row">
       <input type="checkbox" class="spin-cb" id="spin-d" onchange="updateD()">
@@ -200,6 +204,7 @@ var ST=[
   {id:'st3',name:'Squat',ref:'mit oder ohne KB – je nach Ruecken',rounds:1},
 ];
 var B1=[
+  {id:'rdl',name:'RDL',ref:'KB oder Dumbbell – 3x5-8 – kontrolliert – Lower Back + Hamstrings',rounds:3},
   {id:'rp',name:'Rack Pull',ref:'30 kg – Mixed Grip – Stange Mitte Schienbein – Seiten wechseln',rounds:3},
   {id:'sp',name:'Single Arm Shoulder Press',ref:'14 kg – rechts & links – wenn Ruecken besser: Clean and Press',rounds:3},
 ];
@@ -208,7 +213,7 @@ var B2=[
   {id:'hl2',name:'Kettlebell Halo to Reverse Lunge',ref:'18 kg – beide Seiten',rounds:2},
   {id:'sq2',name:'Squat',ref:'mit oder ohne KB',rounds:2},
   {id:'ku',name:'Pull-ups',ref:'Koerpergewicht – 10 Wdh. mit Pause',rounds:3},
-  {id:'row',name:'Single Arm Row',ref:'18 kg – 40 Sek. – rechts & links',rounds:3},
+  {id:'sw3',name:'KB Swing',ref:'14 kg – 3x10',rounds:3},
   {id:'pu',name:'Push-ups',ref:'Parallettes – 40 Sek.',rounds:3},
   {id:'brow',name:'Band Row / Hintere Schulter mit Band',ref:'Band am Rack – 3x15',rounds:3},
 ];
@@ -224,8 +229,14 @@ var DL=[
   {id:'dbr',name:'Band Row / Hintere Schulter mit Band',ref:'3x15 – Band am Rack',rounds:3},
   {id:'dbz',name:'Bicep Curls',ref:'3x15 – KB',rounds:3},
   {id:'dcs',name:'Cossack Squat',ref:'3x15 – so tief wie moeglich',rounds:3},
+  {id:'hc',name:'Hamstring Curl',ref:'3x10 – Band oder Maschine – Hamstring-Isolation',rounds:3},
+  {id:'dku',name:'Pull-ups',ref:'3x5 – Koerpergewicht',rounds:3},
+  {id:'dpu',name:'Push-ups',ref:'3x5 – Koerpergewicht',rounds:3},
   {id:'bpt',name:'Band Pass-Through',ref:'1x15 – Schulter-Mobilitaet',rounds:1},
   {id:'fc',name:'Farmers Carry Hold',ref:'1x – 2,5 Min. halten – KBs beidhaendig – Grip / Trapez / Core',rounds:1},
+];
+var DLB=[
+  {id:'dlbh',name:'Dead Hang',ref:'so lange wie moeglich – Wirbelsaeule dekomprimieren',rounds:1},
 ];
 var MML=[
   {id:'mo1',name:'90-90 Sit & Lean',ref:'Gesaess / Hueftaussen – 40 Sek.',rounds:1},
@@ -244,6 +255,7 @@ var MML=[
   {id:'mo14',name:'Standing Hip CARs',ref:'Auf einem Bein stehen, anderes Bein Bogen nach aussen – Hueftmobilitaet – 40 Sek. / Seite',rounds:1},
   {id:'mo15',name:'90-90 Hip External Rotation',ref:'Ausfallschritt-Position, hinteres Knie am Boden, Knie nach aussen rotieren – 40 Sek. / Seite',rounds:1},
   {id:'mo16',name:'Good Morning to Calf Raise',ref:'Knie zusammen, Oberkörper vor (Deadlift-Muster), aufrecht, dann Zehenspitzen – Hamstrings + Waden – 40 Sek.',rounds:1},
+  {id:'mo17',name:'Knie zur Brust',ref:'auf Ruecken liegend – beide Knie ranziehen – 45 Sek.',rounds:1},
 ];
 var AML=[
   {id:'ab1',name:'Massage-Pistole',ref:'gesamter Ruecken + Beine',rounds:1},
@@ -251,8 +263,10 @@ var AML=[
   {id:'ab3',name:'Runner Stretch',ref:'40 Sek. / Seite',rounds:1},
   {id:'ab4',name:'Lying Hamstring Stretch',ref:'40 Sek. / Seite',rounds:1},
   {id:'ab5',name:'Pigeon Pose',ref:'40 Sek. / Seite',rounds:1},
+  {id:'ab8',name:'Pigeon Pose Variation',ref:'zweite Variante – 40 Sek. / Seite',rounds:1},
   {id:'ab6',name:'Cat-Cow',ref:'Wirbelsaeule Mobilitaet – 40 Sek.',rounds:1},
   {id:'ab7',name:'Psoas Stretch',ref:'Hueftbeuger – 40 Sek. / Seite',rounds:1},
+  {id:'ab9',name:'Keilbrett-Kniestretch',ref:'ein Fuss auf 45-Grad-Keil – nach vorne lehnen – Knie + Unterschenkel – 40 Sek. / Seite',rounds:1},
 ];
 
 var cT={},cD={},cMo={},cAb={};
@@ -377,6 +391,7 @@ buildGroup(B1,'b1','#185FA5',cT,updateT);
 buildGroup(B2,'b2','#1baf7a',cT,updateT);
 buildGroup(BU,'bu','#888',cT,updateT);
 buildGroup(DL,'dl','#1baf7a',cD,updateD);
+buildGroup(DLB,'dlb','#888',cD,updateD);
 buildGroup(MML,'mml','#E07B00',cMo,updateMo);
 buildGroup(AML,'aml','#E24B4A',cAb,updateAb);
 updateT();updateD();updateMo();updateAb();
