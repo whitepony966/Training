@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trainingsplan</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:16px;background:#f5f5f5;color:#333}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.tab{padding:8px;font-size:12px;font-weight:500;border:1px solid #ddd;border-radius:8px;cursor:pointer;background:#eee;color:#666;text-align:center}
+.tab.active-blue{background:#2a78d6;color:#fff;border-color:#2a78d6}
+.tab.active-green{background:#1baf7a;color:#fff;border-color:#1baf7a}
+.tab.active-orange{background:#E07B00;color:#fff;border-color:#E07B00}
+.tab.active-red{background:#E24B4A;color:#fff;border-color:#E24B4A}
+.pane{display:none}
+.pane.active{display:block}
+.timer{font-size:11px;color:#aaa;text-align:right;margin-bottom:3px}
+.count{font-size:12px;color:#666;text-align:right}
+.prog-wrap{background:#e0e0e0;border-radius:3px;height:5px;margin:6px 0 12px;overflow:hidden}
+.prog-fill{height:5px;border-radius:3px;transition:width .3s}
+.block{background:#fff;border:1px solid #e0e0e0;border-radius:12px;margin-bottom:8px;overflow:hidden}
+.block-header{padding:7px 14px;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.05em;color:#fff}
+.block-sub{padding:3px 14px 5px;font-size:11px;color:#aaa}
+.ue-row{display:grid;grid-template-columns:1fr auto;align-items:center;padding:9px 14px;border-bottom:1px solid #f5f5f5}
+.ue-row:last-child{border-bottom:none}
+.ue-name{font-size:13px;color:#333;font-weight:500}
+.ue-ref{font-size:11px;color:#aaa;margin-top:1px}
+.ue-row.done .ue-name{text-decoration:line-through;color:#bbb}
+.ue-row.done .ue-ref{color:#bbb}
+.runden{display:flex;gap:8px}
+.r-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.r-item input{width:22px;height:22px;cursor:pointer}
+.r-label{font-size:10px;color:#aaa}
+.spin-row{display:flex;align-items:center;gap:10px;padding:9px 14px}
+.spin-name{font-size:13px;font-weight:500;color:#333;flex:1}
+.spin-cb{width:22px;height:22px;accent-color:#6B3FA0;cursor:pointer}
+.spin-dur{display:flex;align-items:center;gap:4px}
+.spin-dur input{width:50px;text-align:center;padding:4px 5px;font-size:13px;border:1px solid #ddd;border-radius:6px}
+.reset-btn{width:100%;margin-top:8px;padding:8px;font-size:12px;color:#aaa;background:none;border:1px solid #ddd;border-radius:8px;cursor:pointer}
+.done-banner{background:#E1F5EE;border-radius:10px;padding:12px;text-align:center;display:none;margin-top:8px}
+.done-text{font-size:14px;font-weight:bold;color:#085041}
+.done-sub{font-size:11px;color:#0F6E56;margin-top:3px}
+.save-form{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:14px;margin-top:8px}
+.save-title{font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:.05em;color:#aaa;margin-bottom:10px}
+.save-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.save-row label{font-size:13px;color:#555}
+.save-row input[type=number],.save-row input[type=text]{width:110px;padding:6px 8px;font-size:13px;border:1px solid #ddd;border-radius:6px;text-align:center}
+.save-row input[type=text]{width:160px;text-align:left}
+.save-btn{width:100%;padding:11px;font-size:14px;font-weight:bold;background:#2a78d6;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:4px}
+.save-btn-klein{background:#1baf7a}
+.save-status{font-size:12px;text-align:center;margin-top:8px;min-height:18px}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active-blue" id="tab-t" onclick="switchTab('t')">Mo/Mi/Fr Training Gross</div>
+  <div class="tab" id="tab-d" onclick="switchTab('d')">Di/Do/Sa Training Klein</div>
+  <div class="tab" id="tab-mo" onclick="switchTab('mo')">Morgens Mobility</div>
+  <div class="tab" id="tab-ab" onclick="switchTab('ab')">Abends Mobility</div>
+</div>
+
+<!-- TRAINING -->
+<div class="pane active" id="pane-t">
+  <div class="timer" id="timer-t">&#9201; 00:00</div>
+  <div class="count" id="count-t">0 erledigt</div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog-t" style="width:0%;background:#2a78d6"></div></div>
+  <div class="block">
+    <div class="block-header" style="background:#555">Aufwaermen – 10 Min.</div>
+    <div id="aw"></div>
+  </div>
+  <div class="block">
+    <div class="block-header" style="background:#E24B4A">Startrunde – 1 Runde</div>
+    <div id="st"></div>
+  </div>
+  <div class="block">
+    <div class="block-header" style="background:#185FA5">Block 1 – Straight Sets</div>
+    <div class="block-sub">Alle 3 Runden durch – nicht rotieren</div>
+    <div id="b1"></div>
+  </div>
+  <div class="block">
+    <div class="block-header" style="background:#1baf7a">Block 2 – Circuit</div>
+    <div class="block-sub">Startrunde-Uebungen 2x, Rest 3x</div>
+    <div id="b2"></div>
+  </div>
+  <div class="block">
+    <div class="block-header" style="background:#888">Back-up – optional</div>
+    <div id="bu"></div>
+  </div>
+  <div class="block">
+    <div class="block-header" style="background:#6B3FA0">Spinning – optional</div>
+    <div class="spin-row">
+      <input type="checkbox" class="spin-cb" id="spin-t" onchange="updateT()">
+      <span class="spin-name">Spinning gemacht</span>
+      <div class="spin-dur">
+        <input type="number" id="spin-dur-t" placeholder="25" min="1" max="120" onchange="updateT()">
+        <span style="font-size:12px;color:#aaa">Min.</span>
+      </div>
+    </div>
+  </div>
+  <div class="done-banner" id="done-t">
+    <div class="done-text">Training erledigt!</div>
+    <div class="done-sub">Morgen: Daily</div>
+  </div>
+  <div class="save-form">
+    <div class="save-title">Training speichern</div>
+    <div class="save-row"><label>Datum</label><input type="date" id="date-t"></div>
+    <div class="save-row"><label>Ruecken-Score (1–10)</label><input type="number" id="score-t" min="1" max="10" placeholder="1–10"></div>
+    <div class="save-row"><label>Koerpergewicht (kg)</label><input type="number" id="weight-t" placeholder="91" step="0.1"></div>
+    <div class="save-row"><label>Notiz</label><input type="text" id="notes-t" placeholder="Optional..."></div>
+    <button class="save-btn" onclick="saveTraining('t')">Speichern → Google Sheets</button>
+    <div id="save-status-t" class="save-status"></div>
+  </div>
+  <button class="reset-btn" onclick="resetT()">Zuruecksetzen</button>
+</div>
+
+<!-- DAILY -->
+<div class="pane" id="pane-d">
+  <div class="count" id="count-d">0 erledigt</div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog-d" style="width:0%;background:#1baf7a"></div></div>
+  <div class="block">
+    <div class="block-header" style="background:#1baf7a">Daily – 3x15</div>
+    <div id="dl"></div>
+  </div>
+  <div class="block">
+    <div class="block-header" style="background:#888">Back-up – optional</div>
+    <div id="dlb"></div>
+  </div>
+  <div class="block">
+    <div class="block-header" style="background:#6B3FA0">Spinning – optional</div>
+    <div class="spin-row">
+      <input type="checkbox" class="spin-cb" id="spin-d" onchange="updateD()">
+      <span class="spin-name">Spinning gemacht</span>
+      <div class="spin-dur">
+        <input type="number" id="spin-dur-d" placeholder="25" min="1" max="120" onchange="updateD()">
+        <span style="font-size:12px;color:#aaa">Min.</span>
+      </div>
+    </div>
+  </div>
+  <div class="done-banner" id="done-d">
+    <div class="done-text">Training Klein erledigt!</div>
+    <div class="done-sub">Morgen: Training</div>
+  </div>
+  <div class="save-form">
+    <div class="save-title">Training speichern</div>
+    <div class="save-row"><label>Datum</label><input type="date" id="date-d"></div>
+    <div class="save-row"><label>Ruecken-Score (1–10)</label><input type="number" id="score-d" min="1" max="10" placeholder="1–10"></div>
+    <div class="save-row"><label>Koerpergewicht (kg)</label><input type="number" id="weight-d" placeholder="91" step="0.1"></div>
+    <div class="save-row"><label>Notiz</label><input type="text" id="notes-d" placeholder="Optional..."></div>
+    <button class="save-btn save-btn-klein" onclick="saveTraining('d')">Speichern → Google Sheets</button>
+    <div id="save-status-d" class="save-status"></div>
+  </div>
+  <button class="reset-btn" onclick="resetD()">Zuruecksetzen</button>
+</div>
+
+<!-- MORGENS MOBILITY -->
+<div class="pane" id="pane-mo">
+  <div class="count" id="count-mo">0 erledigt</div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog-mo" style="width:0%;background:#E07B00"></div></div>
+  <div class="block">
+    <div class="block-header" style="background:#E07B00">Morgens Mobility – je 40 Sek.</div>
+    <div id="mml"></div>
+  </div>
+  <div class="done-banner" id="done-mo">
+    <div class="done-text">Morgens Mobility erledigt!</div>
+  </div>
+  <div class="save-form">
+    <div class="save-title">Mobility speichern</div>
+    <div class="save-row"><label>Datum</label><input type="date" id="date-mo"></div>
+    <button class="save-btn" style="background:#E07B00" onclick="saveMobility('mo')">Speichern → Google Sheets</button>
+    <div id="save-status-mo" class="save-status"></div>
+  </div>
+  <button class="reset-btn" onclick="resetMo()">Zuruecksetzen</button>
+</div>
+
+<!-- ABENDS MOBILITY -->
+<div class="pane" id="pane-ab">
+  <div class="count" id="count-ab">0 erledigt</div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog-ab" style="width:0%;background:#E24B4A"></div></div>
+  <div class="block">
+    <div class="block-header" style="background:#E24B4A">Abends Mobility – je 40 Sek.</div>
+    <div id="aml"></div>
+  </div>
+  <div class="done-banner" id="done-ab">
+    <div class="done-text">Abends Mobility erledigt!</div>
+  </div>
+  <div class="save-form">
+    <div class="save-title">Mobility speichern</div>
+    <div class="save-row"><label>Datum</label><input type="date" id="date-ab"></div>
+    <button class="save-btn" style="background:#E24B4A" onclick="saveMobility('ab')">Speichern → Google Sheets</button>
+    <div id="save-status-ab" class="save-status"></div>
+  </div>
+  <button class="reset-btn" onclick="resetAb()">Zuruecksetzen</button>
+</div>
+
+<script>
+var AW=[
+  {id:'aw1',name:'Aufwaermen',ref:'10 Min. – Spazieren, Rad oder leichtes Bewegen',rounds:1}
+];
+var ST=[
+  {id:'st1',name:'Band Pull-Through / Kettlebell Swing',ref:'Band Pull-Through (Ruecken schlechter) ODER Swing 14 kg (Ruecken gut)',rounds:1},
+  {id:'st2',name:'Kettlebell Halo to Reverse Lunge',ref:'18 kg – beide Seiten – KB bis zum Boden',rounds:1},
+  {id:'st3',name:'Squat',ref:'mit oder ohne KB – je nach Ruecken',rounds:1},
+];
+var B1=[
+  {id:'rdl',name:'RDL',ref:'KB oder Dumbbell – 3x5-8 – kontrolliert – Lower Back + Hamstrings',rounds:3},
+  {id:'rp',name:'Rack Pull',ref:'30 kg – Mixed Grip – Stange Mitte Schienbein – Seiten wechseln',rounds:3},
+  {id:'sp',name:'Single Arm Shoulder Press',ref:'14 kg – rechts & links – wenn Ruecken besser: Clean and Press',rounds:3},
+];
+var B2=[
+  {id:'sw2',name:'Band Pull-Through / Kettlebell Swing',ref:'Band Pull-Through (Ruecken schlechter) ODER Swing 14 kg (Ruecken gut)',rounds:2},
+  {id:'hl2',name:'Kettlebell Halo to Reverse Lunge',ref:'18 kg – beide Seiten',rounds:2},
+  {id:'sq2',name:'Squat',ref:'mit oder ohne KB',rounds:2},
+  {id:'ku',name:'Pull-ups',ref:'Koerpergewicht – 10 Wdh. mit Pause',rounds:3},
+  {id:'sw3',name:'KB Swing',ref:'14 kg – 3x10',rounds:3},
+  {id:'pu',name:'Push-ups',ref:'Parallettes – 40 Sek.',rounds:3},
+  {id:'brow',name:'Band Row / Hintere Schulter mit Band',ref:'Band am Rack – 3x15',rounds:3},
+];
+var BU=[
+  {id:'dh',name:'Dead Hang / Overhead Hold',ref:'KB ueber Kopf halten – Schulter-Stabilisation + Dekompression',rounds:1},
+];
+var DL=[
+  {id:'dku',name:'Pull-ups',ref:'6x5 – Koerpergewicht',rounds:6},
+  {id:'dsq',name:'Squat',ref:'3x15 – mit oder ohne KB',rounds:3},
+  {id:'hc',name:'Hamstring Curl',ref:'3x10 – Band oder Maschine – Hamstring-Isolation',rounds:3},
+  {id:'kbp',name:'KB Press',ref:'3x15 – einarmig – rechts & links',rounds:3},
+  {id:'rdl2',name:'RDL',ref:'3x10 – KB oder Dumbbell – kontrolliert – Hamstrings + unterer Ruecken',rounds:3},
+  {id:'pl',name:'Plank',ref:'2x – 40 Sek. halten',rounds:2},
+  {id:'dcs',name:'Cossack Squat',ref:'3x10 – so tief wie moeglich – langsam steigern',rounds:3},
+  {id:'bd',name:'Bird Dog',ref:'3x15 – wenn Ruecken besser: Supermans',rounds:3},
+  {id:'dbp',name:'Dead Bug / Planks',ref:'3x15',rounds:3},
+  {id:'gb',name:'Glute Bridge',ref:'3x15 – Fersen eingraben',rounds:3},
+  {id:'dbr',name:'Band Row / Hintere Schulter mit Band',ref:'3x15 – Band am Rack',rounds:3},
+  {id:'dbz',name:'Bicep Curls',ref:'3x15 – KB',rounds:3},
+  {id:'dpu',name:'Push-ups',ref:'3x5 – Koerpergewicht',rounds:3},
+  {id:'bh',name:'Standing Hip Abduction',ref:'3x15/S – Band',rounds:3},
+  {id:'cl',name:'Clamshells',ref:'3x15/S – seitlich liegen, oberes Knie heben – Glute Medius',rounds:3},
+  {id:'ws',name:'Wall Sits',ref:'3x – 30-45 Sek. halten – Quad isometrisch – knieschonend',rounds:3},
+  {id:'bpa',name:'Band Pull Aparts',ref:'3x15',rounds:3},
+];
+var DLB=[
+  {id:'dlbh',name:'Dead Hang',ref:'so lange wie moeglich – Wirbelsaeule dekomprimieren',rounds:1},
+];
+var MML=[
+  {id:'mo1',name:'90-90 Sit & Lean',ref:'Gesaess / Hueftaussen – 40 Sek.',rounds:1},
+  {id:'mo2',name:'90-90 Sit',ref:'Hueftmobilitaet – 40 Sek.',rounds:1},
+  {id:'mo3',name:'Mt. Climber to Hamstring Bow',ref:'Hueftbeuger + Hamstrings – 40 Sek.',rounds:1},
+  {id:'mo4',name:'Lying Quad Stretch',ref:'Quadrizeps – 40 Sek. / Seite',rounds:1},
+  {id:'mo5',name:'Russenhocke',ref:'Knoechel / Huepfte / Ruecken – 40 Sek.',rounds:1},
+  {id:'mo6',name:'Walk the Dog',ref:'Hamstrings + Waden – 40 Sek.',rounds:1},
+  {id:'mo7',name:'Thread the Needle',ref:'Brustwirbelsaeule Rotation – 40 Sek. / Seite',rounds:1},
+  {id:'mo8',name:'Childs Pose on Fingertips',ref:'Schulter + Ruecken – 40 Sek.',rounds:1},
+  {id:'mo9',name:'Eagle Pose',ref:'Oberer Ruecken + Schulter – 40 Sek.',rounds:1},
+  {id:'mo10',name:'Book Opener',ref:'Brustwirbelsaeule + Brust – 40 Sek. / Seite',rounds:1},
+  {id:'mo11',name:'Elephant Walks',ref:'Hamstrings + Waden + Gesaess – 40 Sek.',rounds:1},
+  {id:'mo12',name:'Best Stretch in the World',ref:'5x / Seite – Hueftbeuger + BWS + Schulter',rounds:1},
+  {id:'mo13',name:'Deep Breathing',ref:'Atemregulation – 40 Sek.',rounds:1},
+  {id:'mo14',name:'Standing Hip CARs',ref:'Auf einem Bein stehen, anderes Bein Bogen nach aussen – Hueftmobilitaet – 40 Sek. / Seite',rounds:1},
+  {id:'mo15',name:'90-90 Hip External Rotation',ref:'Ausfallschritt-Position, hinteres Knie am Boden, Knie nach aussen rotieren – 40 Sek. / Seite',rounds:1},
+  {id:'mo16',name:'Good Morning to Calf Raise',ref:'Knie zusammen, Oberkörper vor (Deadlift-Muster), aufrecht, dann Zehenspitzen – Hamstrings + Waden – 40 Sek.',rounds:1},
+  {id:'mo17',name:'Knie zur Brust',ref:'auf Ruecken liegend – beide Knie ranziehen – 45 Sek.',rounds:1},
+];
+var AML=[
+  {id:'ab1',name:'Massage-Pistole',ref:'gesamter Ruecken + Beine',rounds:1},
+  {id:'ab2',name:'Towel / Seil Hamstring Stretch',ref:'40 Sek. / Seite',rounds:1},
+  {id:'ab3',name:'Runner Stretch',ref:'40 Sek. / Seite',rounds:1},
+  {id:'ab4',name:'Lying Hamstring Stretch',ref:'40 Sek. / Seite',rounds:1},
+  {id:'ab5',name:'Pigeon Pose',ref:'40 Sek. / Seite',rounds:1},
+  {id:'ab9',name:'IT-Band Stretch',ref:'seitlicher Ausfallschritt / TFL-Dehnung – 40 Sek. / Seite',rounds:1},
+  {id:'ab6',name:'Cat-Cow',ref:'Wirbelsaeule Mobilitaet – 40 Sek.',rounds:1},
+  {id:'ab7',name:'Psoas Stretch',ref:'optional – Hueftbeuger – 40 Sek. / Seite',rounds:1},
+  {id:'ab10',name:'Keilbrett-Kniestretch',ref:'ein Fuss auf 45-Grad-Keil – nach vorne lehnen – Knie + Unterschenkel – 40 Sek. / Seite',rounds:1},
+];
+
+var cT={},cD={},cMo={},cAb={};
+var sT=Date.now();
+
+setInterval(function(){
+  var e=Math.floor((Date.now()-sT)/1000),m=Math.floor(e/60),s=e%60;
+  document.getElementById('timer-t').textContent='&#9201; '+(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+},1000);
+
+function calcTotal(groups){
+  var t=0;
+  groups.forEach(function(g){g.forEach(function(u){t+=u.rounds;});});
+  return t+1;
+}
+var TOTAL_T=calcTotal([AW,ST,B1,B2,BU]);
+var TOTAL_D=calcTotal([DL]);
+var TOTAL_MO=MML.length;
+var TOTAL_AB=AML.length;
+
+function switchTab(t){
+  ['t','d','mo','ab'].forEach(function(x){
+    document.getElementById('pane-'+x).className='pane'+(t===x?' active':'');
+  });
+  document.getElementById('tab-t').className='tab'+(t==='t'?' active-blue':'');
+  document.getElementById('tab-d').className='tab'+(t==='d'?' active-green':'');
+  document.getElementById('tab-mo').className='tab'+(t==='mo'?' active-orange':'');
+  document.getElementById('tab-ab').className='tab'+(t==='ab'?' active-red':'');
+}
+
+function buildGroup(items,cid,color,checked,updateFn){
+  var cont=document.getElementById(cid);
+  items.forEach(function(u){
+    var row=document.createElement('div');
+    row.className='ue-row';row.id='row-'+u.id;
+    var left=document.createElement('div');
+    var name=document.createElement('div');name.className='ue-name';name.textContent=u.name;
+    var ref=document.createElement('div');ref.className='ue-ref';ref.textContent=u.ref;
+    left.appendChild(name);left.appendChild(ref);row.appendChild(left);
+    var right=document.createElement('div');right.className='runden';
+    for(var r=1;r<=u.rounds;r++){
+      var k=u.id+'-r'+r;checked[k]=false;
+      var item=document.createElement('label');item.className='r-item';
+      var cb=document.createElement('input');cb.type='checkbox';
+      cb.style.accentColor=color;cb.dataset.key=k;cb.dataset.uid=u.id;cb.dataset.rounds=u.rounds;
+      cb.addEventListener('change',function(){
+        checked[this.dataset.key]=this.checked;
+        var uid=this.dataset.uid,rds=parseInt(this.dataset.rounds),done=true;
+        for(var i=1;i<=rds;i++){if(!checked[uid+'-r'+i]){done=false;break;}}
+        document.getElementById('row-'+uid).className='ue-row'+(done?' done':'');
+        updateFn();
+      });
+      var lbl=document.createElement('span');lbl.className='r-label';
+      lbl.textContent=u.rounds===1?'✓':'R'+r;
+      item.appendChild(cb);item.appendChild(lbl);right.appendChild(item);
+    }
+    row.appendChild(right);cont.appendChild(row);
+  });
+}
+
+function updateT(){
+  var done=Object.values(cT).filter(Boolean).length;
+  if(document.getElementById('spin-t').checked)done++;
+  document.getElementById('count-t').textContent=done+' / '+TOTAL_T+' erledigt';
+  document.getElementById('prog-t').style.width=Math.round(done/TOTAL_T*100)+'%';
+  document.getElementById('done-t').style.display=done>=TOTAL_T?'block':'none';
+}
+function updateD(){
+  var done=Object.values(cD).filter(Boolean).length;
+  if(document.getElementById('spin-d').checked)done++;
+  document.getElementById('count-d').textContent=done+' / '+TOTAL_D+' erledigt';
+  document.getElementById('prog-d').style.width=Math.round(done/TOTAL_D*100)+'%';
+  document.getElementById('done-d').style.display=done>=TOTAL_D?'block':'none';
+}
+function updateMo(){
+  var done=Object.values(cMo).filter(Boolean).length;
+  document.getElementById('count-mo').textContent=done+' / '+TOTAL_MO+' erledigt';
+  document.getElementById('prog-mo').style.width=Math.round(done/TOTAL_MO*100)+'%';
+  document.getElementById('done-mo').style.display=done>=TOTAL_MO?'block':'none';
+}
+function updateAb(){
+  var done=Object.values(cAb).filter(Boolean).length;
+  document.getElementById('count-ab').textContent=done+' / '+TOTAL_AB+' erledigt';
+  document.getElementById('prog-ab').style.width=Math.round(done/TOTAL_AB*100)+'%';
+  document.getElementById('done-ab').style.display=done>=TOTAL_AB?'block':'none';
+}
+
+function resetT(){
+  Object.keys(cT).forEach(function(k){cT[k]=false;});
+  document.querySelectorAll('#pane-t input[type=checkbox]').forEach(function(cb){cb.checked=false;});
+  document.querySelectorAll('#pane-t .ue-row').forEach(function(r){r.className='ue-row';});
+  document.getElementById('spin-dur-t').value='';
+  document.getElementById('done-t').style.display='none';
+  sT=Date.now();updateT();
+}
+function resetD(){
+  Object.keys(cD).forEach(function(k){cD[k]=false;});
+  document.querySelectorAll('#pane-d input[type=checkbox]').forEach(function(cb){cb.checked=false;});
+  document.querySelectorAll('#pane-d .ue-row').forEach(function(r){r.className='ue-row';});
+  document.getElementById('spin-dur-d').value='';
+  document.getElementById('done-d').style.display='none';
+  updateD();
+}
+function resetMo(){
+  Object.keys(cMo).forEach(function(k){cMo[k]=false;});
+  document.querySelectorAll('#pane-mo input[type=checkbox]').forEach(function(cb){cb.checked=false;});
+  document.querySelectorAll('#pane-mo .ue-row').forEach(function(r){r.className='ue-row';});
+  document.getElementById('done-mo').style.display='none';
+  updateMo();
+}
+function resetAb(){
+  Object.keys(cAb).forEach(function(k){cAb[k]=false;});
+  document.querySelectorAll('#pane-ab input[type=checkbox]').forEach(function(cb){cb.checked=false;});
+  document.querySelectorAll('#pane-ab .ue-row').forEach(function(r){r.className='ue-row';});
+  document.getElementById('done-ab').style.display='none';
+  updateAb();
+}
+
+buildGroup(AW,'aw','#555',cT,updateT);
+buildGroup(ST,'st','#E24B4A',cT,updateT);
+buildGroup(B1,'b1','#185FA5',cT,updateT);
+buildGroup(B2,'b2','#1baf7a',cT,updateT);
+buildGroup(BU,'bu','#888',cT,updateT);
+buildGroup(DL,'dl','#1baf7a',cD,updateD);
+buildGroup(DLB,'dlb','#888',cD,updateD);
+buildGroup(MML,'mml','#E07B00',cMo,updateMo);
+buildGroup(AML,'aml','#E24B4A',cAb,updateAb);
+updateT();updateD();updateMo();updateAb();
+
+var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxwk2_yk22qXZSPj4PtHnjSITxCrDMAJ_Cggl4_DFKGk1wEbIvhENkOmw45b5C75yMU/exec';
+
+function getToday(){
+  var d=new Date();
+  return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
+}
+
+function initDates(){
+  var t=getToday();
+  ['t','d','mo','ab'].forEach(function(id){
+    var el=document.getElementById('date-'+id);
+    if(el)el.value=t;
+  });
+}
+
+function saveTraining(type){
+  var isT=type==='t';
+  var date=document.getElementById('date-'+type).value||getToday();
+  var score=document.getElementById('score-'+type).value;
+  var weight=document.getElementById('weight-'+type).value;
+  var notes=document.getElementById('notes-'+type).value;
+  var statusEl=document.getElementById('save-status-'+type);
+
+  var checked=isT?cT:cD;
+  var allEx=isT?[].concat(AW,ST,B1,B2,BU):DL;
+  var gross={},klein={};
+
+  allEx.forEach(function(u){
+    var runden=0;
+    for(var r=1;r<=u.rounds;r++){if(checked[u.id+'-r'+r])runden++;}
+    if(runden>0){
+      var obj={name:u.name,runden:runden,kg:''};
+      if(isT)gross[u.name]=obj; else klein[u.name]=obj;
+    }
+  });
+
+  var spinCb=document.getElementById('spin-'+type);
+  var spinDur=document.getElementById('spin-dur-'+type);
+  var spinning=spinCb&&spinCb.checked?{done:true,dauer:spinDur?spinDur.value:''}:null;
+
+  var entry={
+    date:date,
+    type:isT?'gross':'klein',
+    score:score,
+    weight:weight,
+    notes:notes,
+    data:{gross:gross,klein:klein,daily:{},spinning:spinning}
+  };
+
+  statusEl.textContent='Wird gespeichert...';
+  statusEl.style.color='#aaa';
+
+  fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'save',entry:entry})})
+    .then(function(r){return r.json();})
+    .then(function(){
+      statusEl.textContent='Gespeichert! ✓';
+      statusEl.style.color='#1baf7a';
+    })
+    .catch(function(){
+      statusEl.textContent='Fehler – bitte nochmal versuchen';
+      statusEl.style.color='#E24B4A';
+    });
+}
+
+function saveMobility(type){
+  var date=document.getElementById('date-'+type).value||getToday();
+  var statusEl=document.getElementById('save-status-'+type);
+  var label=type==='mo'?'Morgens Mobility':'Abends Mobility';
+
+  var entry={
+    date:date,
+    type:type,
+    score:'',weight:'',notes:'',
+    data:{gross:{},klein:{},daily:{[label]:{name:label,runden:1,kg:''}},spinning:null}
+  };
+
+  statusEl.textContent='Wird gespeichert...';
+  statusEl.style.color='#aaa';
+
+  fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'save',entry:entry})})
+    .then(function(r){return r.json();})
+    .then(function(){
+      statusEl.textContent='Gespeichert! ✓';
+      statusEl.style.color='#1baf7a';
+    })
+    .catch(function(){
+      statusEl.textContent='Fehler – bitte nochmal versuchen';
+      statusEl.style.color='#E24B4A';
+    });
+}
+
+initDates();
+</script>
+</body>
+</html>
